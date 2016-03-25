@@ -262,7 +262,7 @@ class Client(object):
         try:
             return self.make_request('DELETE', [name],
                                      params=params, formatter=lambda r: True)
-        except errors.ResponseError, ex:
+        except errors.ResponseError as ex:
             if ex.status == 409:
                 raise errors.ContainerNotEmpty(ex.status,
                                                "ContainerNotEmpty Error")

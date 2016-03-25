@@ -3,12 +3,18 @@
 
     See COPYING for license information
 """
-import httplib
 from socket import timeout
-from urlparse import urlparse
 
-import urllib2
+import sys
 import re
+if sys.version_info.major == 2:
+    from urllib2 import Request, urlopen
+    from urlparse import urlparse
+    from httplib import HTTPConnection, HTTPSConnection
+else:
+    from urllib.request import Request, urlopen
+    from urllib.parse import urlparse
+    from http.client import HTTPConnection, HTTPSConnection
 
 from object_storage.errors import ResponseError, NotFound
 from object_storage import consts
@@ -58,10 +64,10 @@ class BaseAuthenticatedConnection:
     def chunk_download(self, url, chunk_size=10 * 1024):
         """ Returns new ChunkedConnection """
         headers = self.get_headers()
-        req = urllib2.Request(url)
+        req = Request(url)
         for k, v in headers.iteritems():
             req.add_header(k, v)
-        r = urllib2.urlopen(req)
+        r = urlopen(req)
         while True:
             buff = r.read(chunk_size)
             if not buff:
@@ -158,9 +164,9 @@ class ChunkedUploadConnection:
         port = int(port)
 
         if scheme == 'https':
-            self.req = httplib.HTTPSConnection(host, port)
+            self.req = HTTPSConnection(host, port)
         else:
-            self.req = httplib.HTTPConnection(host, port)
+            self.req = HTTPConnection(host, port)
         try:
             self.req.putrequest('PUT', path)
             for key, value in headers.iteritems():
@@ -178,7 +184,7 @@ class ChunkedUploadConnection:
                 self.req.send("\r\n")
             else:
                 self.req.send(chunk)
-        except timeout, err:
+        except timeout as err:
             raise err
         except:
             raise ResponseError(0, 'Disconnected')
@@ -188,7 +194,7 @@ class ChunkedUploadConnection:
         try:
             if self._chunked_encoding:
                 self.req.send("0\r\n\r\n")
-        except timeout, err:
+        except timeout as err:
             raise err
         except:
             raise ResponseError(0, 'Disconnected')

@@ -30,7 +30,7 @@ class StorageObjectModel(Model):
         _headers = {}
 
         # Lowercase headers
-        for key, value in headers.iteritems():
+        for key, value in headers.items():
             _key = key.lower()
             _headers[_key] = value
         self.headers = _headers
@@ -59,7 +59,7 @@ class StorageObjectModel(Model):
         _properties['url'] = controller.url
 
         meta = {}
-        for key, value in self.headers.iteritems():
+        for key, value in self.headers.items():
             if key.startswith('meta_'):
                 meta[key[5:]] = value
             elif key.startswith('x-object-meta-'):
@@ -70,6 +70,11 @@ class StorageObjectModel(Model):
         self.properties = _properties
         self.data = self.properties
 
+    def __len__(self):
+        return len(self.properties)
+
+    def __iter__(self):
+        return iter(self.properties)
 
 class StorageObject:
     """
