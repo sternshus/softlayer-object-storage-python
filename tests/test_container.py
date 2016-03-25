@@ -9,8 +9,8 @@ from object_storage.storage_object import StorageObject
 
 class ContainerTest(unittest.TestCase):
     def test_instance_setup(self):
-        self.assert_(self.client == self.container.client, "client is set")
-        self.assert_(self.container.name == 'CONTAINER', "name is set")
+        self.assertTrue(self.client == self.container.client, "client is set")
+        self.assertTrue(self.container.name == 'CONTAINER', "name is set")
 
     def test_create(self):
         self.container.make_request = Mock()
@@ -84,7 +84,7 @@ class ContainerTest(unittest.TestCase):
 
     def test_is_dir(self):
         result = self.container.is_dir()
-        self.assert_(result is True)
+        self.assertTrue(result is True)
 
     def test_make_request(self):
         self.container.make_request('METHOD', 1, 2, a1=1, a2=2)
@@ -96,7 +96,7 @@ class ContainerTest(unittest.TestCase):
         _obj = Mock()
         self.container.storage_object = Mock(return_value=_obj)
         obj = self.container['OBJECT']
-        self.assert_(obj == _obj, "Object returns from container.object()")
+        self.assertTrue(obj == _obj, "Object returns from container.object()")
         self.container.storage_object.assert_called_once_with('OBJECT')
 
     def setUp(self):
