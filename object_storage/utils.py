@@ -41,9 +41,13 @@ class Model(DictMixin):
         return self.properties.keys()
 
 if sys.version_info >= (3,):
+    from urllib.parse import quote, urlencode
+
     def unicode_quote(s):
-        from urllib.parse import quote
         return quote(s)
+
+    def unicode_urlencode(params):
+        return urlencode(params)
 else:
     def unicode_quote(s):
         """ Solves an issue with url-quoting unicode strings"""
@@ -52,6 +56,8 @@ else:
         else:
             return urllib.quote(str(s))
 
+    def unicode_urlencode(params):
+        return urllib.urlencode(params)
 
 def get_path(parts=None):
     """
