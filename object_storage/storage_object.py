@@ -6,8 +6,9 @@
 from object_storage.utils import json, Model
 import mimetypes
 import os
+import six
 import logging
-
+from io import IOBase
 try:
     import StringIO
 except ImportError:
@@ -190,7 +191,7 @@ class StorageObject:
         def _formatter(res):
             objects = {}
             if res.content:
-                items = json.loads(res.content)
+                items = json.loads(res.content if isinstance(res.content, six.string_types) else res.content.decode('utf8'))
                 for item in items:
                     if 'name' in item:
                         objects[item['name']] = self.client.storage_object(
@@ -227,7 +228,7 @@ class StorageObject:
         @raises ResponseError
         """
         meta_headers = {}
-        for k, v in meta.iteritems():
+        for k, v in meta.items():
             meta_headers["X-Object-Meta-%s" % (k, )] = v
         return self.make_request('POST', headers=meta_headers)
 
@@ -332,7 +333,7 @@ class StorageObject:
         @return: StorageObject, self
         """
         size = None
-        if isinstance(data, file):
+        if isinstance(data, IOBase):
             try:
                 data.flush()
             except IOError:
@@ -342,7 +343,7 @@ class StorageObject:
             if hasattr(data, '__len__'):
                 size = len(data)
 
-        if isinstance(data, basestring):
+        if isinstance(data, six.binary_type):
             data = StringIO.StringIO(data)
 
         headers = {}
@@ -369,7 +370,7 @@ class StorageObject:
         res = conn.finish()
 
         if check_md5:
-            assert checksum.hexdigest() == res.headers['etag'], \
+            assert checksum.hexdigest() == res.headers.get('etag'), \
                 'md5 hashes do not match'
         res.headers['content-length'] = transfered
         self.model = StorageObjectModel(
