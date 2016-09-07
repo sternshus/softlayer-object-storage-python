@@ -65,10 +65,10 @@ class AuthenticatedConnection(BaseAuthenticatedConnection):
         if res.status_code == 401:
 
             # Authenticate and try again with a (hopefully) new token
+            self.auth.authenticate()
             self._authenticate()
             res.request.headers.update(self.auth_headers)
-            res.request.send(anyway=True)
-            res = res.request.response
+            res = self.session.send(res.request)
         return res
 
 
