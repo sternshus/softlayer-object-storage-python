@@ -4,13 +4,14 @@
     See COPYING for license information
 """
 import requests
+import six
 from object_storage.transport import BaseAuthentication, \
     BaseAuthenticatedConnection
 from object_storage import errors
 from object_storage.utils import json
 
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('softlayer.transport.requests')
 
 
 class AuthenticatedConnection(BaseAuthenticatedConnection):
@@ -24,6 +25,7 @@ class AuthenticatedConnection(BaseAuthenticatedConnection):
         self.auth = auth
         self.auth.authenticate()
         self._authenticate()
+        self.session = requests.Session()
 
     def make_request(self, method, url=None, *args, **kwargs):
         """ Makes a request """
@@ -34,15 +36,14 @@ class AuthenticatedConnection(BaseAuthenticatedConnection):
         kwargs['headers'] = headers
 
         if 'verify' not in kwargs:
-            kwargs['verify'] = False
+            kwargs['verify'] = True
 
         formatter = None
         if 'formatter' in kwargs:
             formatter = kwargs.get('formatter')
             del kwargs['formatter']
 
-        print method, url, args, kwargs
-        res = requests.request(method, url, *args, **kwargs)
+        res = self.session.request(method, url, *args, **kwargs)
         if kwargs.get('return_response', True):
             res = self._check_success(res)
             if res.status_code == 404:
@@ -64,10 +65,10 @@ class AuthenticatedConnection(BaseAuthenticatedConnection):
         if res.status_code == 401:
 
             # Authenticate and try again with a (hopefully) new token
+            self.auth.authenticate()
             self._authenticate()
             res.request.headers.update(self.auth_headers)
-            res.request.send(anyway=True)
-            res = res.request.response
+            res = self.session.send(res.request)
         return res
 
 
@@ -92,7 +93,7 @@ class Authentication(BaseAuthentication):
         headers = {'X-Storage-User': self.username,
                    'X-Storage-Pass': self.api_key,
                    'Content-Length': '0'}
-        response = requests.get(self.auth_url, headers=headers, verify=False)
+        response = requests.get(self.auth_url, headers=headers, verify=True)
 
         if response.status_code == 401:
             raise errors.AuthenticationError('Invalid Credentials')
@@ -100,7 +101,7 @@ class Authentication(BaseAuthentication):
         response.raise_for_status()
 
         try:
-            storage_options = json.loads(response.content)['storage']
+            storage_options = json.loads(response.content if isinstance(response.content, six.string_types) else response.content.decode('utf8'))['storage']
         except ValueError:
             raise errors.StorageURLNotFound("Could not parse services JSON.")
 

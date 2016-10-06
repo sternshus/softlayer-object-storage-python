@@ -8,9 +8,9 @@ from object_storage.storage_object import StorageObject
 
 class ClientTest(unittest.TestCase):
     def test_instance_setup(self):
-        self.assert_(self.client == self.obj.client, "client is set")
-        self.assert_(self.obj.container == 'CONTAINER', "container is set")
-        self.assert_(self.obj.name == 'NAME', "name is set")
+        self.assertTrue(self.client == self.obj.client, "client is set")
+        self.assertTrue(self.obj.container == 'CONTAINER', "container is set")
+        self.assertTrue(self.obj.name == 'NAME', "name is set")
 
     def test_create(self):
         # no content_type and no ext

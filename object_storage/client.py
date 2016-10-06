@@ -11,6 +11,7 @@ from object_storage.utils import get_path
 
 from object_storage import errors
 
+import six
 import logging
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class AccountModel(Model):
         _headers = {}
 
         # Lowercase headers
-        for key, value in headers.iteritems():
+        for key, value in headers.items():
             _key = key.lower()
             _headers[_key] = value
         self.headers = _headers
@@ -42,7 +43,7 @@ class AccountModel(Model):
         _properties['url'] = controller.url
 
         meta = {}
-        for key, value in self.headers.iteritems():
+        for key, value in self.headers.items():
             if key.startswith('meta_'):
                 meta[key[5:]] = value
             elif key.startswith('x-account-meta-'):
@@ -52,6 +53,12 @@ class AccountModel(Model):
 
         self.properties = _properties
         self.data = self.properties
+
+    def __len__(self):
+        return len(self.properties)
+
+    def __iter__(self):
+        return iter(self.properties)
 
 
 class Client(object):
@@ -160,7 +167,7 @@ class Client(object):
         params = {}
         options = options or {}
         options.update(kwargs)
-        for key, val in options.iteritems():
+        for key, val in options.items():
             if key.startswith('q_'):
                 params["q.%s" % key[2:]] = val
             else:
@@ -176,7 +183,7 @@ class Client(object):
         def _formatter(response):
             """ Formats search results. """
             headers = response.headers
-            items = json.loads(response.content)
+            items = json.loads(response.content if isinstance(response.content, six.string_types) else response.content.decode('utf8'))
             objs = []
             for item in items:
                 if 'type' not in item or item['type'] == 'container':
@@ -234,9 +241,9 @@ class Client(object):
         @raises ResponseError
         """
         meta_headers = {}
-        for k, v in headers.iteritems():
+        for k, v in headers.items():
             meta_headers[k] = v
-        for k, v in meta.iteritems():
+        for k, v in meta.items():
             meta_headers["x-account-meta-%s" % (k, )] = v
         self.make_request('POST', headers=meta_headers)
 
@@ -262,7 +269,7 @@ class Client(object):
         try:
             return self.make_request('DELETE', [name],
                                      params=params, formatter=lambda r: True)
-        except errors.ResponseError, ex:
+        except errors.ResponseError as ex:
             if ex.status == 409:
                 raise errors.ContainerNotEmpty(ex.status,
                                                "ContainerNotEmpty Error")
@@ -282,7 +289,7 @@ class Client(object):
         def _formatter(res):
             containers = []
             if res.content:
-                items = json.loads(res.content)
+                items = json.loads(res.content if isinstance(res.content, six.string_types) else res.content.decode('utf8'))
                 for item in items:
                     name = item.get('name', None)
                     containers.append(self.container(name, item))

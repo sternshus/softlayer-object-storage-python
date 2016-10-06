@@ -3,13 +3,13 @@
 
     See COPYING for license information
 """
-import urllib
+import six
 from object_storage import errors
 from object_storage.transport import BaseAuthentication, \
     BaseAuthenticatedConnection, Response
 import httplib2
 
-from object_storage.utils import json
+from object_storage.utils import json, unicode_urlencode
 
 import logging
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class AuthenticatedConnection(BaseAuthenticatedConnection):
         headers.update(self.get_headers())
 
         if params:
-            url = "%s?%s" % (url, urllib.urlencode(params))
+            url = "%s?%s" % (url, unicode_urlencode(params))
 
         def _make_request(headers):
             logger.debug("%s %s %s" % (method, url, headers))
@@ -100,7 +100,7 @@ class Authentication(BaseAuthentication):
             raise errors.AuthenticationError('Invalid Credentials')
         response.raise_for_status()
         try:
-            storage_options = json.loads(response.content)['storage']
+            storage_options = json.loads(response.content if isinstance(response.content, six.string_types) else response.content.decode('utf8'))['storage']
         except ValueError:
             raise errors.StorageURLNotFound("Could not parse services JSON.")
 

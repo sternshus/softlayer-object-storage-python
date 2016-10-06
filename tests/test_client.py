@@ -9,19 +9,19 @@ from object_storage.errors import ResponseError, ContainerNotEmpty
 
 class ClientTest(unittest.TestCase):
     def test_instance_setup(self):
-        self.assert_(self.client.username == 'username', "username set")
-        self.assert_(self.client.api_key == 'api_key', "api_key set")
-        self.assert_(self.client.container_class == self.container_class,
+        self.assertTrue(self.client.username == 'username', "username set")
+        self.assertTrue(self.client.api_key == 'api_key', "api_key set")
+        self.assertTrue(self.client.container_class == self.container_class,
                      "container_class set")
-        self.assert_(self.client.object_class == self.object_class,
+        self.assertTrue(self.client.object_class == self.object_class,
                      "object_class set")
-        self.assert_(self.client.conn == self.connection, "connection set")
-        self.assert_(self.client.delimiter == '/', "default delimiter set")
+        self.assertTrue(self.client.conn == self.connection, "connection set")
+        self.assertTrue(self.client.delimiter == '/', "default delimiter set")
 
     def test_set_delimiter(self):
         delimiter = Mock()
         self.client.set_delimiter(delimiter)
-        self.assert_(self.client.delimiter == delimiter,
+        self.assertTrue(self.client.delimiter == delimiter,
                      "set_delimiter sets the delimiter")
 
     def test_container(self):
@@ -41,7 +41,7 @@ class ClientTest(unittest.TestCase):
         loaded_item = Mock()
         self.container_class().load.return_value = loaded_item
         result = self.client.get_container('container_name')
-        self.assert_(loaded_item == result)
+        self.assertTrue(loaded_item == result)
         self.container_class.assert_called_with('container_name',
                                                 client=self.client,
                                                 headers=None)
@@ -50,7 +50,7 @@ class ClientTest(unittest.TestCase):
         created_item = Mock()
         self.container_class().create.return_value = created_item
         result = self.client.create_container('container_name')
-        self.assert_(created_item == result, 'returns the container itself')
+        self.assertTrue(created_item == result, 'returns the container itself')
         self.container_class.assert_called_with('container_name',
                                                 client=self.client,
                                                 headers=None)
@@ -95,7 +95,7 @@ class ClientTest(unittest.TestCase):
         loaded_item = Mock()
         self.object_class().load.return_value = loaded_item
         result = self.client.get_object('object_name', 'container_name')
-        self.assert_(loaded_item == result, "Returns the correct object")
+        self.assertTrue(loaded_item == result, "Returns the correct object")
         self.object_class.assert_called_with('object_name', 'container_name',
                                              client=self.client, headers=None)
 
@@ -112,34 +112,34 @@ class ClientTest(unittest.TestCase):
             'METHOD', 'storage_url/PATH/PATH2')
 
     def test_is_dir(self):
-        self.assert_(self.client.is_dir() is True,
+        self.assertTrue(self.client.is_dir() is True,
                      'Client itself is a directory')
 
     def test_path(self):
-        self.assert_(self.client.path == '',
+        self.assertTrue(self.client.path == '',
                      "Path returns an empty string for Client")
 
     def test_get_url(self):
         self.connection.storage_url = 'storage_url'
         url = self.client.get_url(['path'])
-        self.assert_(url == 'storage_url/path',
+        self.assertTrue(url == 'storage_url/path',
                      "URL Returns correctly with one-item list path")
 
         self.connection.storage_url = 'storage_url'
         url = self.client.get_url(['path', 'path2'])
-        self.assert_(url == 'storage_url/path/path2',
+        self.assertTrue(url == 'storage_url/path/path2',
                      "URL Returns correctly with two-item list path")
 
         self.connection.storage_url = 'storage_url'
         self.storage_url = None
         url = self.client.get_url(['path'])
-        self.assert_(url == 'storage_url/path',
+        self.assertTrue(url == 'storage_url/path',
                      "The storage_url is retreived from connection object "
                      "when it isn't set")
 
         self.connection.storage_url = 'storage_url'
         url = self.client.get_url(['path'])
-        self.assert_(url == 'storage_url/path',
+        self.assertTrue(url == 'storage_url/path',
                      'URL is returned correctly with a string path')
 
     def test_chunk_upload(self):
@@ -151,7 +151,7 @@ class ClientTest(unittest.TestCase):
         self.connection.chunk_upload.return_value = _chunkable
         chunkable = self.client.chunk_upload('path',
                                              headers=_headers, size=_size)
-        self.assert_(chunkable == _chunkable,
+        self.assertTrue(chunkable == _chunkable,
                      'Chunkable returns from conn.get_chunkable')
         self.connection.chunk_upload.assert_called_once_with('PUT', _url,
                                                              headers=_headers,
@@ -161,7 +161,7 @@ class ClientTest(unittest.TestCase):
         _container = Mock()
         self.client.container = Mock(return_value=_container)
         container = self.client['CONTAINER']
-        self.assert_(container == _container,
+        self.assertTrue(container == _container,
                      'Container returns from client.container()')
         self.client.container.assert_called_once_with('CONTAINER')
 

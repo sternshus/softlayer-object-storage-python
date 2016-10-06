@@ -6,8 +6,9 @@
 from object_storage.utils import json, Model
 import mimetypes
 import os
+import six
 import logging
-
+from io import IOBase
 try:
     import StringIO
 except ImportError:
@@ -30,7 +31,7 @@ class StorageObjectModel(Model):
         _headers = {}
 
         # Lowercase headers
-        for key, value in headers.iteritems():
+        for key, value in headers.items():
             _key = key.lower()
             _headers[_key] = value
         self.headers = _headers
@@ -59,7 +60,7 @@ class StorageObjectModel(Model):
         _properties['url'] = controller.url
 
         meta = {}
-        for key, value in self.headers.iteritems():
+        for key, value in self.headers.items():
             if key.startswith('meta_'):
                 meta[key[5:]] = value
             elif key.startswith('x-object-meta-'):
@@ -70,6 +71,11 @@ class StorageObjectModel(Model):
         self.properties = _properties
         self.data = self.properties
 
+    def __len__(self):
+        return len(self.properties)
+
+    def __iter__(self):
+        return iter(self.properties)
 
 class StorageObject:
     """
@@ -185,7 +191,7 @@ class StorageObject:
         def _formatter(res):
             objects = {}
             if res.content:
-                items = json.loads(res.content)
+                items = json.loads(res.content if isinstance(res.content, six.string_types) else res.content.decode('utf8'))
                 for item in items:
                     if 'name' in item:
                         objects[item['name']] = self.client.storage_object(
@@ -222,7 +228,7 @@ class StorageObject:
         @raises ResponseError
         """
         meta_headers = {}
-        for k, v in meta.iteritems():
+        for k, v in meta.items():
             meta_headers["X-Object-Meta-%s" % (k, )] = v
         return self.make_request('POST', headers=meta_headers)
 
@@ -327,17 +333,21 @@ class StorageObject:
         @return: StorageObject, self
         """
         size = None
-        if isinstance(data, file):
+        if isinstance(data, IOBase):
             try:
                 data.flush()
             except IOError:
                 pass
-            size = int(os.fstat(data.fileno())[6])
+            # edit for jupyter
+            # size = int(os.fstat(data.fileno())[6])
+            position = data.tell()
+            size = data.seek(0, os.SEEK_END)
+            data.seek(position, os.SEEK_SET)
         else:
             if hasattr(data, '__len__'):
                 size = len(data)
 
-        if isinstance(data, basestring):
+        if isinstance(data, six.binary_type):
             data = StringIO.StringIO(data)
 
         headers = {}
@@ -364,7 +374,7 @@ class StorageObject:
         res = conn.finish()
 
         if check_md5:
-            assert checksum.hexdigest() == res.headers['etag'], \
+            assert checksum.hexdigest() == res.headers.get('etag'), \
                 'md5 hashes do not match'
         res.headers['content-length'] = transfered
         self.model = StorageObjectModel(
