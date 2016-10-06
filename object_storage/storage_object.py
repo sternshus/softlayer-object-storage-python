@@ -338,7 +338,11 @@ class StorageObject:
                 data.flush()
             except IOError:
                 pass
-            size = int(os.fstat(data.fileno())[6])
+            # edit for jupyter
+            # size = int(os.fstat(data.fileno())[6])
+            position = data.tell()
+            size = data.seek(0, os.SEEK_END)
+            data.seek(position, os.SEEK_SET)
         else:
             if hasattr(data, '__len__'):
                 size = len(data)
