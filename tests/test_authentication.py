@@ -8,15 +8,15 @@ from object_storage.transport import BaseAuthentication
 class BaseAuthenticationTest(unittest.TestCase):
 
     def test_instance_setup(self):
-        self.assert_(self.auth.storage_url is None,
+        self.assertTrue(self.auth.storage_url is None,
                      "Storage url is set correctly")
-        self.assert_(self.auth.auth_token is None, "auth_token set correctly")
+        self.assertTrue(self.auth.auth_token is None, "auth_token set correctly")
 
     def test_authenticate(self):
         self.auth.authenticate()
-        self.assert_(self.auth.storage_url == 'STORAGE_URL',
+        self.assertTrue(self.auth.storage_url == 'STORAGE_URL',
                      "storage_url set correctly")
-        self.assert_(self.auth.auth_token == 'AUTH_TOKEN',
+        self.assertTrue(self.auth.auth_token == 'AUTH_TOKEN',
                      "auth_token set correctly")
 
     def setUp(self):

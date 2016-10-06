@@ -20,9 +20,9 @@ from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer, UNKNOWN_LENGTH
 
 import urlparse
-import urllib
+import six
 
-from object_storage.utils import json
+from object_storage.utils import json, unicode_urlencode
 
 
 def complete_request(resp, callback=None, load_body=True):
@@ -98,7 +98,7 @@ def make_request(method, url=None, headers=None, *args, **kwargs):
     params = kwargs.get('params', None)
 
     if params:
-        params = urllib.urlencode(params)
+        params = unicode_urlencode(params)
 
     url = _full_url(url, params)
     body = kwargs.get('data')
@@ -173,7 +173,7 @@ class Authentication(BaseAuthentication):
         response.raise_for_status()
 
         try:
-            storage_options = json.loads(response.content)['storage']
+            storage_options = json.loads(response.content if isinstance(response.content, six.string_types) else response.content.decode('utf8'))['storage']
         except ValueError:
             raise errors.StorageURLNotFound("Could not parse services JSON.")
 
