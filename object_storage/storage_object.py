@@ -348,7 +348,7 @@ class StorageObject:
                 size = len(data)
 
         if isinstance(data, six.binary_type):
-            data = StringIO.StringIO(data)
+            data = six.BytesIO(data)
 
         headers = {}
         content_type = self.content_type
